@@ -126,18 +126,18 @@ namespace Unity.Core.Editor.Tools
                 },
                 new WasdPackageInfo
                 {
-                    PackageId = "com.wasd.applovin",
-                    DisplayName = "WASD AppLovin MAX Service",
+                    PackageId = "com.unity.applovin",
+                    DisplayName = "Unity AppLovin MAX Service",
                     Description = "AppLovin MAX Mediation Ads Service Adapter with Mediation Network Setup.",
-                    RepoName = "com.wasd.applovin.git",
+                    RepoName = "com.unity.applovin.git",
                     IsSelected = false
                 },
                 new WasdPackageInfo
                 {
-                    PackageId = "com.wasd.appsflyer",
-                    DisplayName = "WASD AppsFlyer Service",
+                    PackageId = "com.unity.appsflyer",
+                    DisplayName = "Unity AppsFlyer Service",
                     Description = "AppsFlyer Attribution, In-App Analytics & Impression-Level Ad Revenue Tracking.",
-                    RepoName = "com.wasd.appsflyer.git",
+                    RepoName = "com.unity.appsflyer.git",
                     IsSelected = false
                 },
                 new WasdPackageInfo
