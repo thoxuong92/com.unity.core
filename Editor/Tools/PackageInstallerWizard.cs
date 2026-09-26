@@ -118,10 +118,10 @@ namespace Unity.Core.Editor.Tools
                 },
                 new WasdPackageInfo
                 {
-                    PackageId = "com.wasd.firebase",
-                    DisplayName = "WASD Firebase Service",
+                    PackageId = "com.unity.firebase",
+                    DisplayName = "Unity Firebase Service",
                     Description = "Firebase Analytics, Remote Config, Ad Revenue Attribution & Editor Sync Tooling.",
-                    RepoName = "com.wasd.firebase.git",
+                    RepoName = "com.unity.firebase.git",
                     IsSelected = false
                 },
                 new WasdPackageInfo
