@@ -150,10 +150,10 @@ namespace Unity.Core.Editor.Tools
                 },
                 new WasdPackageInfo
                 {
-                    PackageId = "com.wasd.adjust",
-                    DisplayName = "WASD Adjust Service",
+                    PackageId = "com.unity.adjust",
+                    DisplayName = "Unity Adjust Service",
                     Description = "Adjust Attribution, Deep Linking, SKAdNetwork & Impression-Level Ad Revenue Tracking.",
-                    RepoName = "com.wasd.adjust.git",
+                    RepoName = "com.unity.adjust.git",
                     IsSelected = false
                 }
             };
