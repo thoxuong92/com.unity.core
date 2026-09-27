@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,11 +14,30 @@ namespace Unity.Core.Boot
     /// Điều phối quá trình Splash Loading khi khởi động game.
     /// Quản lý thanh tiến trình mượt mà, đồng bộ cấu hình Remote Config, hiển thị App Open Ad đầu tiên,
     /// kiểm tra kết nối mạng và kích hoạt Banner khi hoàn tất.
+    /// Tự động kích hoạt tại BeforeSceneLoad mà KHÔNG CẦN gán component MonoBehaviour thủ công trong scene.
     /// </summary>
     [HelpURL("https://github.com/thoxuong92/com.unity.core")]
     public class Splash : MonoBehaviour
     {
         public static Splash Instance { get; private set; }
+
+        /// <summary>
+        /// Cho phép bật/tắt cơ chế tự động chạy Splash Loading khi game bật.
+        /// </summary>
+        public static bool EnableAutoSplash { get; set; } = true;
+
+        /// <summary>
+        /// Sự kiện tĩnh thông báo phần trăm loading (0f -> 1f), cho phép mọi script UI trong scene lắng nghe.
+        /// </summary>
+        public static event Action<float> OnProgress;
+
+        /// <summary>
+        /// Sự kiện tĩnh thông báo hoàn tất loading toàn bộ.
+        /// </summary>
+        public static event Action OnCompleted;
+
+        public static float CurrentPercent => Instance != null ? Instance.Percent : 0f;
+        public static bool IsLoadingCompleted => Instance != null && Instance.IsCompleted;
 
         [Header("Settings")]
         [SerializeField]
@@ -74,11 +94,49 @@ namespace Unity.Core.Boot
             set => nextSceneName = value;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void AutoInitialize()
+        {
+            if (!EnableAutoSplash || Instance != null) return;
+
+#if UNITY_2023_1_OR_NEWER
+            var existing = UnityEngine.Object.FindFirstObjectByType<Splash>();
+#else
+            var existing = UnityEngine.Object.FindObjectOfType<Splash>();
+#endif
+            if (existing != null)
+            {
+                Instance = existing;
+                return;
+            }
+
+            var rootGO = BootstrapperRoot.GetOrCreate();
+            rootGO.AddComponent<Splash>();
+            AppLogger.Log("[Splash] Tự động khởi chạy Splash Loading không cần gán component thủ công.");
+        }
+
         protected virtual void Awake()
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                // Đồng bộ các listener từ component trong scene vào Instance chính
+                Instance.OnProgressPercent.AddListener(p => OnProgressPercent?.Invoke(p));
+                Instance.OnComplete.AddListener(() => OnComplete?.Invoke());
+
+                // Đồng bộ cấu hình từ Inspector của Scene nếu người dùng có tùy chỉnh
+                Instance.DurationLoading = this.DurationLoading;
+                Instance.TimeLoadAppOpen = this.TimeLoadAppOpen;
+                Instance.TimeWaitRemoteConfig = this.TimeWaitRemoteConfig;
+                Instance.IsShowBannerOnComplete = this.IsShowBannerOnComplete;
+                if (!string.IsNullOrEmpty(this.nextSceneName))
+                {
+                    Instance.NextSceneName = this.nextSceneName;
+                }
+
+                // Phát ngay percent hiện tại cho UI mới xuất hiện trong scene
+                OnProgressPercent?.Invoke(Instance.Percent);
+
+                Destroy(this);
                 return;
             }
 
@@ -118,26 +176,40 @@ namespace Unity.Core.Boot
             _loadingCoroutine = StartCoroutine(IE_Loading());
         }
 
+        /// <summary>
+        /// Cho phép bắt đầu loading tĩnh từ bất cứ đâu.
+        /// </summary>
+        public static void Start()
+        {
+            if (Instance != null)
+            {
+                Instance.StartLoading();
+            }
+        }
+
         private IEnumerator IE_Loading()
         {
             _timeStart = Time.time;
             Time.timeScale = 1f;
             _isCompleted = false;
             _isCompletedAppOpen = false;
+
             OnProgressPercent?.Invoke(Percent);
+            OnProgress?.Invoke(Percent);
+
             DurationLoading = Mathf.Max(0.1f, DurationLoading);
 
             yield return new WaitForEndOfFrame();
 
             // Giai đoạn 1: Chạy mồi ngẫu nhiên 25% -> 30%
-            float firstTarget = Random.Range(Mathf.Max(Percent, 0.25f), 0.30f);
+            float firstTarget = UnityEngine.Random.Range(Mathf.Max(Percent, 0.25f), 0.30f);
             yield return IE_Progress(Percent, firstTarget);
 
             // Giai đoạn 2: Chờ Remote Config khởi tạo
             yield return IE_WaitRemoteConfig(TimeWaitRemoteConfig);
 
             // Giai đoạn 3: Chạy tiếp tới ngẫu nhiên 50% -> 80%
-            float secondTarget = Random.Range(Mathf.Max(Percent, 0.50f), 0.80f);
+            float secondTarget = UnityEngine.Random.Range(Mathf.Max(Percent, 0.50f), 0.80f);
             yield return IE_Progress(Percent, secondTarget);
 
             yield return new WaitForEndOfFrame();
@@ -166,6 +238,7 @@ namespace Unity.Core.Boot
 
                 Percent = Mathf.MoveTowards(Percent, end, speed * Time.deltaTime / DurationLoading);
                 OnProgressPercent?.Invoke(Percent);
+                OnProgress?.Invoke(Percent);
 
                 if (Percent >= end)
                 {
@@ -185,6 +258,7 @@ namespace Unity.Core.Boot
 
                 Percent = Mathf.MoveTowards(Percent, end, Time.deltaTime / duration);
                 OnProgressPercent?.Invoke(Percent);
+                OnProgress?.Invoke(Percent);
 
                 if (Percent >= end)
                 {
@@ -265,7 +339,12 @@ namespace Unity.Core.Boot
                 AnalyticsService.LogEvent("internet_not_reachable");
             }
 
+            Percent = 1f;
+            OnProgressPercent?.Invoke(1f);
+            OnProgress?.Invoke(1f);
+
             OnComplete?.Invoke();
+            OnCompleted?.Invoke();
 
             if (IsShowBannerOnComplete)
             {

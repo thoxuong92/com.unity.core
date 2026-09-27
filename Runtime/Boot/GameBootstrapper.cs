@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Core.FSM;
 using Unity.Core.Logging;
@@ -6,20 +7,84 @@ using Unity.Core.Services;
 namespace Unity.Core.Boot
 {
     /// <summary>
-    /// Base Bootstrapper MonoBehaviour for every Unity Core game.
-    /// Manages service initialization and initial state startup.
+    /// Base Bootstrapper MonoBehaviour cho toàn bộ game nền Unity Core.
+    /// Quản lý khởi tạo Service, cấu hình Frame Rate và khởi động Game State Machine.
+    /// Tự động kích hoạt tại BeforeSceneLoad mà KHÔNG CẦN gán component MonoBehaviour thủ công trong scene.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
-    public abstract class GameBootstrapper : MonoBehaviour
+    public class GameBootstrapper : MonoBehaviour
     {
         public static GameBootstrapper Instance { get; private set; }
-        protected GameStateMachine StateMachine { get; private set; }
+
+        /// <summary>
+        /// Cho phép bật/tắt cơ chế tự động khởi chạy GameBootstrapper lúc game bật.
+        /// </summary>
+        public static bool EnableAutoBootstrap { get; set; } = true;
+
+        public GameStateMachine StateMachine { get; protected set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void AutoInitialize()
+        {
+            if (!EnableAutoBootstrap || Instance != null) return;
+
+#if UNITY_2023_1_OR_NEWER
+            var existing = UnityEngine.Object.FindFirstObjectByType<GameBootstrapper>();
+#else
+            var existing = UnityEngine.Object.FindObjectOfType<GameBootstrapper>();
+#endif
+            if (existing != null)
+            {
+                Instance = existing;
+                return;
+            }
+
+            // Tự động tìm subclass của GameBootstrapper do developer định nghĩa (nếu có)
+            Type targetType = typeof(GameBootstrapper);
+            try
+            {
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                for (int i = 0; i < assemblies.Length; i++)
+                {
+                    var asm = assemblies[i];
+                    var name = asm.GetName().Name;
+                    if (name.StartsWith("System") || name.StartsWith("mscorlib") || name.StartsWith("UnityEngine"))
+                    {
+                        continue;
+                    }
+
+                    var types = asm.GetTypes();
+                    for (int j = 0; j < types.Length; j++)
+                    {
+                        var t = types[j];
+                        if (t != typeof(GameBootstrapper) && typeof(GameBootstrapper).IsAssignableFrom(t) && !t.IsAbstract)
+                        {
+                            targetType = t;
+                            break;
+                        }
+                    }
+
+                    if (targetType != typeof(GameBootstrapper))
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogWarning($"[GameBootstrapper] Lỗi quét custom bootstrapper: {ex.Message}. Sử dụng default GameBootstrapper.");
+            }
+
+            var rootGO = BootstrapperRoot.GetOrCreate();
+            rootGO.AddComponent(targetType);
+            AppLogger.Log($"[GameBootstrapper] Tự động khởi chạy GameBootstrapper ({targetType.Name}) không cần gán component thủ công.");
+        }
 
         protected virtual void Awake()
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                Destroy(this);
                 return;
             }
 
@@ -56,18 +121,21 @@ namespace Unity.Core.Boot
         }
 
         /// <summary>
-        /// Register all required game services into ServiceRegistry.
+        /// Đăng ký các dịch vụ gameplay bổ sung vào ServiceRegistry.
         /// </summary>
-        protected abstract void RegisterServices();
+        protected virtual void RegisterServices() { }
 
         /// <summary>
-        /// Register FSM States into StateMachine.
+        /// Đăng ký các FSM State bổ sung vào GameStateMachine.
         /// </summary>
-        protected abstract void RegisterStates(GameStateMachine fsm);
+        protected virtual void RegisterStates(GameStateMachine fsm) { }
 
         /// <summary>
-        /// Trigger initial state transition (e.g. Enter Splash / MainMenu).
+        /// Kích hoạt state chuyển cảnh ban đầu sau khi boot xong.
         /// </summary>
-        protected abstract void OnBootCompleted();
+        protected virtual void OnBootCompleted()
+        {
+            AppLogger.Log("[GameBootstrapper] Boot completed.");
+        }
     }
 }

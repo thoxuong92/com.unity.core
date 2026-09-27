@@ -60,30 +60,42 @@ EventBus.Publish(new ScoreChangedEvent { NewScore = 100 });
 EventBus.Unsubscribe<ScoreChangedEvent>(OnScoreChanged);
 ```
 
-### 3. Splash Loading & Package Bootstrap
-Gắn component `Splash` vào GameObject trong Boot/Splash Scene:
+### 3. Splash Loading & Package Bootstrap (Zero-Setup Auto-Start)
+`GameBootstrapper` và `Splash` **tự động khởi chạy ngay tại `BeforeSceneLoad`** mà không cần tạo GameObject hay kéo thả component MonoBehaviour vào bất kỳ Scene nào!
+
+Mọi script UI ở bất kỳ scene nào đều có thể lắng nghe tiến trình qua Static Events:
 ```csharp
 using UnityEngine;
+using UnityEngine.UI;
 using Unity.Core.Boot;
 
 public class GameSplashUI : MonoBehaviour
 {
-    [SerializeField] private Splash splash;
-    [SerializeField] private UnityEngine.UI.Slider progressSlider;
+    [SerializeField] private Slider progressSlider;
 
-    private void Awake()
+    private void OnEnable()
     {
-        splash.OnProgressPercent.AddListener(percent =>
-        {
-            progressSlider.value = percent;
-        });
+        // Lắng nghe trực tiếp từ Splash tĩnh (không cần gán reference tới Splash)
+        Splash.OnProgress += OnProgressChanged;
+        Splash.OnCompleted += OnSplashCompleted;
+    }
 
-        splash.OnComplete.AddListener(() =>
-        {
-            Debug.Log("Game sẵn sàng vào màn hình chính!");
-        });
+    private void OnDisable()
+    {
+        Splash.OnProgress -= OnProgressChanged;
+        Splash.OnCompleted -= OnSplashCompleted;
+    }
+
+    private void OnProgressChanged(float percent)
+    {
+        if (progressSlider != null) progressSlider.value = percent;
+    }
+
+    private void OnSplashCompleted()
+    {
+        Debug.Log("Loading & khởi tạo các package đã hoàn tất!");
     }
 }
 ```
-*(Hoặc dùng trực tiếp `using WASD; public class MySplash : Splash` tương thích ngược 100%).*
+*(Nếu bạn vẫn muốn kéo thả `Splash` component vào Scene để tùy chỉnh trên Inspector hoặc dùng `using WASD; public class Splash : TickBehaviour`, hệ thống sẽ tự động đồng bộ và gom về instance chính).*
 
