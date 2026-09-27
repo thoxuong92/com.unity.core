@@ -2,7 +2,8 @@
     "name": "Unity.Core.Editor",
     "rootNamespace": "Unity.Core.Editor",
     "references": [
-        "Unity.Core"
+        "Unity.Core",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

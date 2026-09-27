@@ -1,7 +1,9 @@
 {
     "name": "Unity.Core",
     "rootNamespace": "Unity.Core",
-    "references": [],
+    "references": [
+        "UnityEngine.UI"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

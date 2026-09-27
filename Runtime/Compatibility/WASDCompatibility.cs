@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Core;
 using Unity.Core.Logging;
 using Unity.Core.Services;
 using Unity.Core.Services.Ads;
 using Unity.Core.Services.Analytics;
 using Unity.Core.Services.RemoteConfig;
+using Unity.Core.Tick;
+using Unity.Core.UI;
 
 namespace Unity.Core.Services
 {
@@ -75,16 +76,28 @@ namespace Unity.Core.Services
     /// <summary>
     /// Service Adapter tương thích cho ServiceRemoteConfig (WASD pattern).
     /// </summary>
-    public static class ServiceRemoteConfig
+    public class ServiceRemoteConfig : IService
     {
-        public static bool IsRemoteConfigInitialized => RemoteConfigService.IsFetched;
-        public static T GetValue<T>(string key, T defaultValue = default) => RemoteConfigService.GetValue(key, defaultValue);
-        public static void Fetch(Action<bool> onComplete = null) => RemoteConfigService.Fetch(onComplete);
+        public T GetValue<T>(string key, T defaultValue = default)
+        {
+            return RemoteConfigService.GetValue(key, defaultValue);
+        }
+
+        public void Initialize() { }
+        public void Shutdown() { }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void AutoRegister()
+        {
+            if (!ServiceRegistry.IsRegistered<ServiceRemoteConfig>())
+            {
+                ServiceRegistry.Register(new ServiceRemoteConfig());
+            }
+        }
     }
 
     /// <summary>
     /// Service Adapter tương thích cho ServiceLogEvent (WASD pattern).
-    /// Chuyển tiếp sự kiện phân tích sang AnalyticsService.
     /// </summary>
     public class ServiceLogEvent : IService
     {
@@ -110,11 +123,17 @@ namespace Unity.Core.Services
 namespace WASD
 {
     /// <summary>
-    /// Base class giả lập cho TickBehaviour từ hệ thống WASD cũ, kế thừa MonoBehaviour chuẩn của Unity.
+    /// Base class chuyển tiếp cho TickBehaviour từ namespace WASD cũ sang Unity.Core.Tick.TickBehaviour.
     /// </summary>
-    public abstract class TickBehaviour : MonoBehaviour
+    public abstract class TickBehaviour : Unity.Core.Tick.TickBehaviour
     {
-        protected virtual void Awake() { }
+    }
+
+    /// <summary>
+    /// Base class chuyển tiếp cho BaseUI từ namespace WASD cũ sang Unity.Core.UI.BaseUI.
+    /// </summary>
+    public abstract class BaseUI : Unity.Core.UI.BaseUI
+    {
     }
 
     /// <summary>
@@ -132,8 +151,10 @@ namespace WASD
     public static class Wasd
     {
         public static void Log(string message) => AppLogger.Log(message);
+        public static void Log(string tag, string message) => AppLogger.Log($"[{tag}] {message}");
         public static void LogWarning(string message) => AppLogger.LogWarning(message);
         public static void LogError(string message) => AppLogger.LogError(message);
+        public static void LogStateInitialize(string stateName) => AppLogger.Log($"[Init] State '{stateName}' initialized.");
     }
 
     /// <summary>

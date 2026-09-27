@@ -2,7 +2,7 @@
   "name": "com.unity.core",
   "version": "1.0.0",
   "displayName": "Unity Core Framework",
-  "description": "Core foundation framework providing Service Locator, Event Bus, Game State Machine, Object Pooling, Condition-based Logging and Security Scaffolding.",
+  "description": "Core foundation framework providing Service Locator, Event Bus, State Machine, Object Pooling, Responsive UI & Safe Area, Anti-Cheat Obfuscated PlayerPrefs, Inspector Attributes, and Security Scaffolding.",
   "unity": "2021.3",
   "keywords": [
     "unity",
@@ -10,7 +10,10 @@
     "framework",
     "architecture",
     "service-locator",
-    "event-bus"
+    "event-bus",
+    "safe-area",
+    "playerprefs",
+    "ui"
   ],
   "author": {
     "name": "thoxuong92",
@@ -20,5 +23,32 @@
     "type": "git",
     "url": "https://github.com/thoxuong92/com.unity.core.git"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "samples": [
+    {
+      "displayName": "Ads Sample",
+      "description": "Demo implementation of AdsService integration.",
+      "path": "Samples~/Ads"
+    },
+    {
+      "displayName": "Inspector Attributes",
+      "description": "Showcase of [Button], [ShowIf], [Progress], [HorizontalLine], [Preview], [Tag], [Layer], [ForceFill].",
+      "path": "Samples~/Attributes"
+    },
+    {
+      "displayName": "HealthBar & Damage",
+      "description": "Healthbar component, delayed damage bar, and IDamageable system.",
+      "path": "Samples~/HealthBar"
+    },
+    {
+      "displayName": "Object Pooler",
+      "description": "High performance bullet and VFX object pooling demo.",
+      "path": "Samples~/Pooler"
+    },
+    {
+      "displayName": "Splash Loading",
+      "description": "Splash loading screen with animated progress bar and service bootstrap.",
+      "path": "Samples~/Splash"
+    }
+  ]
 }
