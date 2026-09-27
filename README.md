@@ -99,6 +99,5 @@ public class GameSplashUI : MonoBehaviour
         Debug.Log("Loading & khởi tạo các package đã hoàn tất!");
     }
 }
-```
-*(Tương thích 100% với code cũ `using WASD; public class Splash : TickBehaviour`).*
+
 
