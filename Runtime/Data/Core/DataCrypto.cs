@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using UnityEngine;
 using Unity.Core.Logging;
 
 namespace Unity.Core.Data

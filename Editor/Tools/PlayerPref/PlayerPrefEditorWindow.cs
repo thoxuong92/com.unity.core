@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+#if UNITY_EDITOR_WIN
 using Microsoft.Win32;
+#endif
 using UnityEditor;
 using UnityEngine;
 
@@ -529,22 +531,31 @@ public class PlayerPrefEditorWindow : EditorWindow
     private string[] GetAllWindowsKeys()
     {
         List<string> result = new List<string>();
-#if !NETSTANDARD2_1
-        RegistryKey cuKey = Registry.CurrentUser;
-        RegistryKey unityKey = cuKey.CreateSubKey(@"SOFTWARE\Unity\UnityEditor\" +
-           PlayerSettings.companyName + @"\" + PlayerSettings.productName);
-
-        string[] values = unityKey.GetValueNames();
-        for (int i = 0; i < values.Length; i++)
+#if UNITY_EDITOR_WIN
+        try
         {
-            values[i] = values[i].Substring(0, values[i].LastIndexOf("_"));
-            if (!listIgnore.Contains(values[i]))
+            RegistryKey cuKey = Registry.CurrentUser;
+            RegistryKey unityKey = cuKey.CreateSubKey(@"SOFTWARE\Unity\UnityEditor\" +
+               PlayerSettings.companyName + @"\" + PlayerSettings.productName);
+
+            if (unityKey != null)
             {
-                result.Add(values[i]);
+                string[] values = unityKey.GetValueNames();
+                for (int i = 0; i < values.Length; i++)
+                {
+                    int lastIdx = values[i].LastIndexOf("_");
+                    string keyName = lastIdx >= 0 ? values[i].Substring(0, lastIdx) : values[i];
+                    if (!listIgnore.Contains(keyName))
+                    {
+                        result.Add(keyName);
+                    }
+                }
             }
         }
-#else
-        Debug.LogError("Registry access is not supported in .NET Standard 2.1");
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[PlayerPrefsEditor] Cannot read registry: {ex.Message}");
+        }
 #endif
 
         return result.ToArray();
