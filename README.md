@@ -405,4 +405,4 @@ public class GameSplashUI : MonoBehaviour
 ---
 
 ## 📄 Bản Quyền
-Phát triển và bảo trì bởi **thoxuong92**. Phát hành dưới giấy phép MIT.
+Phát triển và bảo trì bởi **joukyuu**. Phát hành dưới giấy phép MIT.
