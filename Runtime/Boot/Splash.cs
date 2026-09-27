@@ -95,7 +95,7 @@ namespace Unity.Core.Boot
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void AutoInitialize()
+        static void OnInit()
         {
             if (!EnableAutoSplash || Instance != null) return;
 

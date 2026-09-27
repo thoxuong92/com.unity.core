@@ -24,7 +24,7 @@ namespace Unity.Core.Boot
         public GameStateMachine StateMachine { get; protected set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void AutoInitialize()
+        static void OnInit()
         {
             if (!EnableAutoBootstrap || Instance != null) return;
 
