@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Core.Logging;
 
 namespace Unity.Core.Services.RemoteConfig
@@ -28,6 +28,8 @@ namespace Unity.Core.Services.RemoteConfig
         }
 
         public static bool IsFetched => _provider != null && _provider.IsFetched;
+        public static bool IsRemoteConfigInitialized => IsFetched;
+        public static bool IsInitialized => IsFetched;
 
         /// <summary>
         /// Lấy giá trị cấu hình theo key, tự động trả về defaultValue nếu chưa tải được hoặc chưa có cấu hình.

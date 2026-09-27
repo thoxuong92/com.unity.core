@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using Unity.Core.Logging;
 
@@ -82,6 +82,9 @@ namespace Unity.Core.Services.Ads
             _activeProvider?.ShowRewarded(placement, onRewardEarned);
         }
 
+        public static bool ShowedFirstOpen { get; set; } = false;
+        public static bool ShowFirstOpenDone { get; set; } = false;
+
         /// <summary>
         /// Hiển thị quảng cáo mở ứng dụng (App Open Ad).
         /// </summary>
@@ -94,6 +97,34 @@ namespace Unity.Core.Services.Ads
             }
 
             _activeProvider?.ShowAppOpen(placement, onClosed);
+        }
+
+        /// <summary>
+        /// Gọi hiển thị App Open Ad đầu tiên khi mở game / splash screen.
+        /// Tự động cập nhật cờ ShowedFirstOpen và ShowFirstOpenDone khi quảng cáo kết thúc hoặc bị đóng.
+        /// </summary>
+        public static void OnAppOpenLoaded(Action onClosed = null)
+        {
+            if (ShowedFirstOpen)
+            {
+                onClosed?.Invoke();
+                return;
+            }
+
+            ShowedFirstOpen = true;
+
+            if (!CanShowAppOpen)
+            {
+                ShowFirstOpenDone = true;
+                onClosed?.Invoke();
+                return;
+            }
+
+            ShowAppOpen("first_open", () =>
+            {
+                ShowFirstOpenDone = true;
+                onClosed?.Invoke();
+            });
         }
 
         #region Mock Fallback Provider

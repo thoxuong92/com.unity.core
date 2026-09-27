@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Unity.Core.Services.Ads
@@ -29,5 +29,6 @@ namespace Unity.Core.Services.Ads
         [Header("App Open Ad")]
         public bool IsAppOpenEnabled = true;
         public float AppOpenInterval = 60f;
+        public float TimeLoadAppOpen = 5f;
     }
 }

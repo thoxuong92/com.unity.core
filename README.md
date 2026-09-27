@@ -10,6 +10,7 @@ Gói framework nền tảng dành cho các dự án game Unity, hỗ trợ cả 
 5. **`AppLogger`**: Hệ thống logging có điều kiện `[Conditional("ENABLE_UNITY_CORE_LOG")]`, tự động xóa sạch log khi build Release để an toàn trên Store.
 6. **`PackageInstallerWizard`** (Editor Window): Tích hợp trực tiếp tại `Unity Core > Package Manager Hub` để cài/gỡ các module qua Git URL.
 7. **`AccountSafetyScaffolder`** (Editor Window): Quét hardcoded API Key, kiểm tra IL2CPP Stripping, cấu hình an toàn cho nhiều tài khoản Google Play / App Store.
+8. **`Splash` & Bootstrapping**: Quản lý quy trình nạp khởi đầu (Progress Bar, Remote Config, App Open Ad first open, Internet connectivity check, Auto Banner & Scene Transition) tương thích hoàn toàn với hệ thống WASD.
 
 ## Hướng Dẫn Cài Đặt Qua UPM (Unity Package Manager)
 Thêm vào file `Packages/manifest.json`:
@@ -58,3 +59,31 @@ EventBus.Publish(new ScoreChangedEvent { NewScore = 100 });
 // Hủy lắng nghe
 EventBus.Unsubscribe<ScoreChangedEvent>(OnScoreChanged);
 ```
+
+### 3. Splash Loading & Package Bootstrap
+Gắn component `Splash` vào GameObject trong Boot/Splash Scene:
+```csharp
+using UnityEngine;
+using Unity.Core.Boot;
+
+public class GameSplashUI : MonoBehaviour
+{
+    [SerializeField] private Splash splash;
+    [SerializeField] private UnityEngine.UI.Slider progressSlider;
+
+    private void Awake()
+    {
+        splash.OnProgressPercent.AddListener(percent =>
+        {
+            progressSlider.value = percent;
+        });
+
+        splash.OnComplete.AddListener(() =>
+        {
+            Debug.Log("Game sẵn sàng vào màn hình chính!");
+        });
+    }
+}
+```
+*(Hoặc dùng trực tiếp `using WASD; public class MySplash : Splash` tương thích ngược 100%).*
+
