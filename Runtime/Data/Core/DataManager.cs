@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Core.Logging;
 
@@ -50,7 +50,7 @@ namespace Unity.Core.Data
             var type = typeof(DataHandler<TModel>);
             if (!_registry.TryGetValue(type, out var instance))
             {
-                string finalKey = !string.IsNullOrEmpty(key) ? key : $"WASD_{typeof(TModel).Name}";
+                string finalKey = !string.IsNullOrEmpty(key) ? key : $"Data_{typeof(TModel).Name}";
                 instance = new DataHandler<TModel>(finalKey);
                 _registry[type] = instance;
             }

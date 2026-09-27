@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using Unity.Core.Logging;
 
@@ -18,7 +18,7 @@ namespace Unity.Core.Data
         public event Action<T> OnLoaded;
         public event Action<T> OnSaved;
 
-        public DataHandler() : this($"WASD_{typeof(T).Name}")
+        public DataHandler() : this($"Data_{typeof(T).Name}")
         {
         }
 

@@ -15,12 +15,12 @@ namespace Unity.Dashboard
         // -----------------------------------------------------------------------------------------
         // 🔑 CẤU HÌNH CỨNG TRONG CODE (Hardcoded Configurations)
         // -----------------------------------------------------------------------------------------
-        public const string DEFAULT_SERVER_URL = "https://dashboard.wasdmobile.com";
+        public const string DEFAULT_SERVER_URL = "";
         
         /// <summary>
-        /// API Key được set cứng trong code. Bạn có thể thay đổi trực tiếp chuỗi này.
+        /// API Key tùy chọn (để trống mặc định để không gây liên kết chéo giữa các tài khoản).
         /// </summary>
-        public const string HARDCODED_API_KEY = "wm_9a5d319c80fe164677ae5cddf1405624c5ba78e2288fda2f";
+        public const string HARDCODED_API_KEY = "";
 
         // -----------------------------------------------------------------------------------------
         // 1. ASYNC / AWAIT APIS
@@ -57,6 +57,11 @@ namespace Unity.Dashboard
             }
 
             string actualServerUrl = string.IsNullOrEmpty(serverUrl) ? DEFAULT_SERVER_URL : serverUrl.TrimEnd('/');
+            if (string.IsNullOrEmpty(actualServerUrl))
+            {
+                AppLogger.Log("[DashboardApiClient] Server URL chưa được thiết lập. Dùng cấu hình cục bộ từ Resources.");
+                return null;
+            }
             string actualApiKey = string.IsNullOrEmpty(apiKey) ? HARDCODED_API_KEY : apiKey.Trim();
 
             string endpoint = $"{actualServerUrl}/api/projects/{UnityWebRequest.EscapeURL(projectCode.Trim())}/info";

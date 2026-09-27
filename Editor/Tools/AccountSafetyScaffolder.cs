@@ -78,9 +78,9 @@ namespace Unity.Core.Editor.Tools
             // Bundle Identifier Check
             string bundleId = PlayerSettings.applicationIdentifier;
             EditorGUILayout.LabelField($"• Current Package Name / Bundle ID: {bundleId}");
-            if (bundleId.Contains("com.DefaultCompany") || bundleId.Contains("com.wasd.template"))
+            if (bundleId.Contains("com.DefaultCompany") || bundleId.Contains("com.wasd") || bundleId.Contains("com.example"))
             {
-                EditorGUILayout.HelpBox("NGUY HIỂM: Đang dùng Package Name mặc định. Phải đổi sang Package ID riêng cho tài khoản.", MessageType.Error);
+                EditorGUILayout.HelpBox("NGUY HIỂM: Đang dùng Package Name mặc định / trùng mẫu. Phải đổi sang Package ID riêng biệt cho từng tài khoản.", MessageType.Error);
             }
 
             EditorGUILayout.EndVertical();
@@ -88,11 +88,11 @@ namespace Unity.Core.Editor.Tools
 
         private void DrawHardcodedKeyScannerSection()
         {
-            EditorGUILayout.LabelField("2. Quét Tránh Trùng Khóa & ID Nhạy Cảm (Hardcoded Credential Scanner)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("2. Quét Tránh Trùng Dấu Vân Tay & Key Nhạy Cảm (Store Multi-Account Safety)", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Quét toàn bộ mã nguồn để đảm bảo không hardcode AdMob App ID, Firebase URL, OneSignal Key,...");
+            EditorGUILayout.LabelField("Quét toàn bộ Project (Code, Manifests, XML) để chống bị Google Play / Apple Store quét liên kết tài khoản (Account Association):");
 
-            if (GUILayout.Button("Quét Source Code Trong Project", GUILayout.Height(30)))
+            if (GUILayout.Button("Quét Toàn Diện Project", GUILayout.Height(32)))
             {
                 ScanSourceCodeForKeys();
             }
@@ -101,11 +101,11 @@ namespace Unity.Core.Editor.Tools
             {
                 if (_detectedHardcodedKeys.Count == 0)
                 {
-                    EditorGUILayout.HelpBox("✓ Tốt! Không phát hiện khóa nhạy cảm nào bị hardcode trong source code.", MessageType.Info);
+                    EditorGUILayout.HelpBox("✓ Tuyệt vời! Không phát hiện khóa nhạy cảm, debuggable hay permission nguy hiểm nào.", MessageType.Info);
                 }
                 else
                 {
-                    EditorGUILayout.HelpBox($"Phát hiện {_detectedHardcodedKeys.Count} vị trí có nguy cơ hardcode key nhạy cảm:", MessageType.Warning);
+                    EditorGUILayout.HelpBox($"Phát hiện {_detectedHardcodedKeys.Count} vấn đề có nguy cơ gây reject hoặc liên kết tài khoản:", MessageType.Warning);
                     foreach (var issue in _detectedHardcodedKeys)
                     {
                         EditorGUILayout.LabelField($"⚠ {issue}", EditorStyles.wordWrappedMiniLabel);
@@ -139,18 +139,18 @@ namespace Unity.Core.Editor.Tools
             _detectedHardcodedKeys.Clear();
             _hasScanned = true;
 
+            // 1. Quét C# Scripts
             string[] scriptFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
             string[] suspiciousPatterns = new string[]
             {
                 @"ca-app-pub-\d+",                    // AdMob App / Ad Unit ID
-                @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", // GUID/UUID
-                @"https://[a-zA-Z0-9-]+\.firebaseio\.com", // Firebase Database URL
-                @"AIzaSy[A-Za-z0-9_-]{33}"             // Google API Key
+                @"AIzaSy[A-Za-z0-9_-]{33}",           // Google API Key
+                @"dashboard\.wasdmobile\.com",        // Shared internal server URL
+                @"wm_[a-f0-9]{48}"                    // Shared Dashboard API key
             };
 
             foreach (var file in scriptFiles)
             {
-                // Skip editor scripts and this scanner itself
                 if (file.Contains("Editor") || file.Contains("AccountSafetyScaffolder")) continue;
 
                 string content = File.ReadAllText(file);
@@ -160,8 +160,33 @@ namespace Unity.Core.Editor.Tools
                     if (matches.Count > 0)
                     {
                         string relativePath = "Assets" + file.Substring(Application.dataPath.Length);
-                        _detectedHardcodedKeys.Add($"File '{relativePath}' khớp pattern: {pattern} ({matches.Count} chỗ)");
+                        _detectedHardcodedKeys.Add($"[Code] '{relativePath}' chứa mẫu nhạy cảm: {pattern} ({matches.Count} chỗ)");
                     }
+                }
+            }
+
+            // 2. Quét Android Manifests & XMLs (Kiểm tra nguy cơ Reject Store)
+            string[] xmlFiles = Directory.GetFiles(Application.dataPath, "*.xml", SearchOption.AllDirectories);
+            foreach (var file in xmlFiles)
+            {
+                string content = File.ReadAllText(file);
+                string relativePath = "Assets" + file.Substring(Application.dataPath.Length);
+
+                if (content.Contains("android:debuggable=\"true\""))
+                {
+                    _detectedHardcodedKeys.Add($"[Manifest Reject] '{relativePath}' có 'android:debuggable=\"true\"'. Google Play sẽ TỪ CHỐI APK/AAB này!");
+                }
+                if (content.Contains("android.permission.INSTALL_PACKAGES"))
+                {
+                    _detectedHardcodedKeys.Add($"[Permission Reject] '{relativePath}' chứa 'INSTALL_PACKAGES'. Quyền hệ thống này bị Google Play CẤM đối với app thường!");
+                }
+                if (content.Contains("cleartextTrafficPermitted=\"true\"") && !content.Contains("127.0.0.1"))
+                {
+                    _detectedHardcodedKeys.Add($"[Security Warning] '{relativePath}' cho phép cleartext HTTP traffic toàn app (nguy cơ cảnh báo bảo mật Google Play)!");
+                }
+                if (content.Contains("com.example."))
+                {
+                    _detectedHardcodedKeys.Add($"[Package Reject] '{relativePath}' chứa package name mẫu 'com.example.*'. Google Play sẽ từ chối!");
                 }
             }
         }

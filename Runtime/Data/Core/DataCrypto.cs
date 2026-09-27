@@ -11,8 +11,57 @@ namespace Unity.Core.Data
     /// </summary>
     public static class DataCrypto
     {
-        private static readonly byte[] DefaultKey = Encoding.UTF8.GetBytes("UNITY_CORE_SECURE_KEY_2026_V1.0!");
-        private static readonly byte[] DefaultIV = Encoding.UTF8.GetBytes("UNITY_INIT_VECT!");
+        private static byte[] _customKey;
+        private static byte[] _customIV;
+
+        /// <summary>
+        /// Cho phép thiết lập khóa mã hóa tùy chỉnh riêng cho từng game / dự án.
+        /// </summary>
+        public static void SetCustomKey(string key, string iv)
+        {
+            if (!string.IsNullOrEmpty(key))
+            {
+                using (var sha = SHA256.Create())
+                {
+                    _customKey = sha.ComputeHash(Encoding.UTF8.GetBytes(key));
+                }
+            }
+            if (!string.IsNullOrEmpty(iv))
+            {
+                using (var md5 = MD5.Create())
+                {
+                    _customIV = md5.ComputeHash(Encoding.UTF8.GetBytes(iv));
+                }
+            }
+        }
+
+        private static byte[] GetKey()
+        {
+            if (_customKey != null) return _customKey;
+            
+            // Tự động sinh khóa mã hóa riêng biệt theo Package Name / Bundle ID của từng game
+            // Đảm bảo không game nào bị trùng dấu vân tay (Anti-Fingerprint) giữa các tài khoản Store
+            string appId = Application.identifier;
+            if (string.IsNullOrEmpty(appId)) appId = Application.productName ?? "DefaultGameApp";
+            
+            using (var sha = SHA256.Create())
+            {
+                return sha.ComputeHash(Encoding.UTF8.GetBytes($"CORE_{appId}_SALT_#2026"));
+            }
+        }
+
+        private static byte[] GetIV()
+        {
+            if (_customIV != null) return _customIV;
+
+            string appId = Application.identifier;
+            if (string.IsNullOrEmpty(appId)) appId = Application.productName ?? "DefaultGameApp";
+
+            using (var md5 = MD5.Create())
+            {
+                return md5.ComputeHash(Encoding.UTF8.GetBytes($"IV_{appId}"));
+            }
+        }
 
         /// <summary>
         /// Mã hóa chuỗi văn bản (JSON) sang chuỗi Base64 đã được mã hóa AES.
@@ -25,8 +74,8 @@ namespace Unity.Core.Data
             {
                 using (var aes = Aes.Create())
                 {
-                    aes.Key = DefaultKey;
-                    aes.IV = DefaultIV;
+                    aes.Key = GetKey();
+                    aes.IV = GetIV();
 
                     using (var ms = new MemoryStream())
                     {
@@ -60,8 +109,8 @@ namespace Unity.Core.Data
                 byte[] cipherBytes = Convert.FromBase64String(cipherText);
                 using (var aes = Aes.Create())
                 {
-                    aes.Key = DefaultKey;
-                    aes.IV = DefaultIV;
+                    aes.Key = GetKey();
+                    aes.IV = GetIV();
 
                     using (var ms = new MemoryStream(cipherBytes))
                     {

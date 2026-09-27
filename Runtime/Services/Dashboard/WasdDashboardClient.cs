@@ -13,7 +13,7 @@ namespace Unity.Core.Services.Dashboard
     /// </summary>
     public class WasdDashboardClient
     {
-        public const string DefaultBaseUrl = "https://dashboard.wasdmobile.com";
+        public const string DefaultBaseUrl = "";
         public string BaseUrl { get; set; } = DefaultBaseUrl;
 
         /// <summary>
@@ -29,8 +29,14 @@ namespace Unity.Core.Services.Dashboard
                 throw new ArgumentException("Mã hoặc ID dự án không được để trống.", nameof(projectIdOrCode));
             }
 
+            string cleanBaseUrl = BaseUrl?.TrimEnd('/') ?? "";
+            if (string.IsNullOrEmpty(cleanBaseUrl))
+            {
+                AppLogger.Log("[WasdDashboardClient] BaseUrl chưa được cấu hình. Dùng cấu hình cục bộ từ Resources.");
+                return null;
+            }
+
             string actualApiKey = string.IsNullOrEmpty(apiKey) ? Unity.Dashboard.DashboardApiClient.HARDCODED_API_KEY : apiKey;
-            string cleanBaseUrl = BaseUrl.TrimEnd('/');
             string url = $"{cleanBaseUrl}/api/projects/{UnityWebRequest.EscapeURL(projectIdOrCode.Trim())}/info";
 
             // Gắn query param dự phòng

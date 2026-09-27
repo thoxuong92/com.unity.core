@@ -12,7 +12,6 @@ namespace Unity.Core.Logging
     public static class AppLogger
     {
         [Conditional("ENABLE_UNITY_CORE_LOG")]
-        [Conditional("ENABLE_WASD_LOG")]
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEVELOPMENT_BUILD")]
         public static void Log(string message, Object context = null)
@@ -21,7 +20,6 @@ namespace Unity.Core.Logging
         }
 
         [Conditional("ENABLE_UNITY_CORE_LOG")]
-        [Conditional("ENABLE_WASD_LOG")]
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEVELOPMENT_BUILD")]
         public static void LogWarning(string message, Object context = null)
