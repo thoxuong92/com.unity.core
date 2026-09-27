@@ -1,19 +1,22 @@
 {
   "name": "com.unity.core",
   "version": "1.0.0",
-  "displayName": "Unity Core Framework",
-  "description": "Core foundation framework providing Service Locator, Event Bus, State Machine, Object Pooling, Responsive UI & Safe Area, Anti-Cheat Obfuscated PlayerPrefs, Inspector Attributes, and Security Scaffolding.",
+  "displayName": "Unity Core Services Foundation",
+  "description": "Modular, decoupled core foundation for integrating 3rd-party services (Firebase, Adjust, AppsFlyer, AppLovin MAX) with unified Service Registry, Ads/Analytics/RemoteConfig/Tracking interfaces, Safe Area, and Splash Bootstrapping.",
   "unity": "2021.3",
   "keywords": [
     "unity",
     "core",
-    "framework",
-    "architecture",
-    "service-locator",
-    "event-bus",
-    "safe-area",
-    "playerprefs",
-    "ui"
+    "services",
+    "mediation",
+    "ads",
+    "analytics",
+    "tracking",
+    "remote-config",
+    "firebase",
+    "adjust",
+    "appsflyer",
+    "applovin"
   ],
   "author": {
     "name": "thoxuong92",
@@ -29,21 +32,6 @@
       "displayName": "Ads Sample",
       "description": "Demo implementation of AdsService integration.",
       "path": "Samples~/Ads"
-    },
-    {
-      "displayName": "Inspector Attributes",
-      "description": "Showcase of [Button], [ShowIf], [Progress], [HorizontalLine], [Preview], [Tag], [Layer], [ForceFill].",
-      "path": "Samples~/Attributes"
-    },
-    {
-      "displayName": "HealthBar & Damage",
-      "description": "Healthbar component, delayed damage bar, and IDamageable system.",
-      "path": "Samples~/HealthBar"
-    },
-    {
-      "displayName": "Object Pooler",
-      "description": "High performance bullet and VFX object pooling demo.",
-      "path": "Samples~/Pooler"
     },
     {
       "displayName": "Splash Loading",

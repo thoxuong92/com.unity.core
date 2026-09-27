@@ -10,7 +10,7 @@ namespace Unity.Core.Editor.Tools
 {
     public class PackageInstallerWizard : EditorWindow
     {
-        private class WasdPackageInfo
+        private class PackageItemInfo
         {
             public string PackageId;
             public string DisplayName;
@@ -25,11 +25,11 @@ namespace Unity.Core.Editor.Tools
         private int _selectedTab = 0;
         private readonly string[] _tabTitles = new string[] { "📦 Packages", "🔌 Plugins" };
 
-        // Danh sách WASD Packages
-        private List<WasdPackageInfo> _packages;
+        // Danh sách Modular Packages
+        private List<PackageItemInfo> _packages;
 
         // Danh sách Plugins / 3rd-Party SDKs
-        private List<WasdPackageInfo> _plugins;
+        private List<PackageItemInfo> _plugins;
 
         // Cấu hình Git chung
         private string _gitOrgUrl = "https://github.com/thoxuong92/";
@@ -41,7 +41,7 @@ namespace Unity.Core.Editor.Tools
 
         // Cài đặt Plugin Custom
         private string _customPluginName = "";
-        private string _customPluginGitUrl = "https://github.com/wasdgamestudio/";
+        private string _customPluginGitUrl = "https://github.com/thoxuong92/";
 
         [MenuItem("Unity Core/Package Manager Hub", false, 1)]
         public static void ShowWindow()
@@ -65,95 +65,47 @@ namespace Unity.Core.Editor.Tools
 
         private void InitPackages()
         {
-            _packages = new List<WasdPackageInfo>
+            _packages = new List<PackageItemInfo>
             {
-                new WasdPackageInfo
+                new PackageItemInfo
                 {
                     PackageId = "com.unity.core",
-                    DisplayName = "Unity Core Framework",
-                    Description = "Service Locator, Event Bus, FSM, Object Pooling & Conditional Logger.",
+                    DisplayName = "Unity Core Services Foundation",
+                    Description = "Service Registry, Ads/Analytics/RemoteConfig/Tracking Interfaces & Splash Loading.",
                     RepoName = "com.unity.core.git",
                     IsRequired = true,
                     IsSelected = true
                 },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.ui",
-                    DisplayName = "WASD UI Navigation",
-                    Description = "Screen & Popup Stack Management, Safe Area Fitter for iOS Notch & Android punch-hole.",
-                    RepoName = "com.wasd.ui.git",
-                    IsSelected = true
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.audio",
-                    DisplayName = "WASD Audio Manager",
-                    Description = "BGM & SFX multi-channel audio player with automatic pooling & mute handlers.",
-                    RepoName = "com.wasd.audio.git",
-                    IsSelected = true
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.save",
-                    DisplayName = "WASD Encrypted Save",
-                    Description = "Secure AES-encrypted JSON data persistence & automatic save state wrapper.",
-                    RepoName = "com.wasd.save.git",
-                    IsSelected = true
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.ads",
-                    DisplayName = "WASD Ads Wrapper",
-                    Description = "Unified IAdsService with pluggable adapters (AdMob, AppLovin MAX, Unity Ads).",
-                    RepoName = "com.wasd.ads.git",
-                    IsSelected = false
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.analytics",
-                    DisplayName = "WASD Analytics Hub",
-                    Description = "Unified event logging for Firebase, GameAnalytics, AppsFlyer.",
-                    RepoName = "com.wasd.analytics.git",
-                    IsSelected = false
-                },
-                new WasdPackageInfo
+                new PackageItemInfo
                 {
                     PackageId = "com.unity.firebase",
                     DisplayName = "Unity Firebase Service",
-                    Description = "Firebase Analytics, Remote Config, Ad Revenue Attribution & Editor Sync Tooling.",
+                    Description = "Firebase Analytics, Remote Config & OAuth2 Cloud Editor Sync Tooling.",
                     RepoName = "com.unity.firebase.git",
-                    IsSelected = false
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.unity.applovin",
-                    DisplayName = "Unity AppLovin MAX Service",
-                    Description = "AppLovin MAX Mediation Ads Service Adapter with Mediation Network Setup.",
-                    RepoName = "com.unity.applovin.git",
-                    IsSelected = false
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.unity.appsflyer",
-                    DisplayName = "Unity AppsFlyer Service",
-                    Description = "AppsFlyer Attribution, In-App Analytics & Impression-Level Ad Revenue Tracking.",
-                    RepoName = "com.unity.appsflyer.git",
-                    IsSelected = false
-                },
-                new WasdPackageInfo
-                {
-                    PackageId = "com.wasd.input",
-                    DisplayName = "WASD Mobile Touch Input",
-                    Description = "Virtual Joystick (Fixed/Floating/Dynamic), Swipe Look Touchpad, Action Buttons & Gestures.",
-                    RepoName = "com.wasd.input.git",
                     IsSelected = true
                 },
-                new WasdPackageInfo
+                new PackageItemInfo
+                {
+                    PackageId = "com.unity.applovin",
+                    DisplayName = "Unity AppLovin MAX Mediation",
+                    Description = "AppLovin MAX Mediation Ads Adapter với ILRD Impression-Level Revenue Tracking.",
+                    RepoName = "com.unity.applovin.git",
+                    IsSelected = true
+                },
+                new PackageItemInfo
                 {
                     PackageId = "com.unity.adjust",
-                    DisplayName = "Unity Adjust Service",
-                    Description = "Adjust Attribution, Deep Linking, SKAdNetwork & Impression-Level Ad Revenue Tracking.",
+                    DisplayName = "Unity Adjust MMP Service",
+                    Description = "Adjust Attribution, Deep Linking, SKAdNetwork & In-App Event Tracking.",
                     RepoName = "com.unity.adjust.git",
+                    IsSelected = false
+                },
+                new PackageItemInfo
+                {
+                    PackageId = "com.unity.appsflyer",
+                    DisplayName = "Unity AppsFlyer MMP Service",
+                    Description = "AppsFlyer Attribution, In-App Analytics & Ad Revenue Attribution.",
+                    RepoName = "com.unity.appsflyer.git",
                     IsSelected = false
                 }
             };
@@ -161,14 +113,14 @@ namespace Unity.Core.Editor.Tools
 
         private void InitPlugins()
         {
-            _plugins = new List<WasdPackageInfo>
+            _plugins = new List<PackageItemInfo>
             {
-                new WasdPackageInfo
+                new PackageItemInfo
                 {
                     PackageId = "com.applovin.mediation.ads",
                     DisplayName = "AppLovin MAX SDK",
                     Description = "Bộ SDK AppLovin MAX Mediation hỗ trợ quản lý quảng cáo Interstitial, Rewarded, Banner & App Open.",
-                    CustomGitUrl = "https://github.com/wasdgamestudio/applovin-max.git",
+                    CustomGitUrl = "https://github.com/AppLovin/AppLovin-MAX-Unity-Plugin.git",
                     IsSelected = false
                 }
             };
@@ -305,7 +257,7 @@ namespace Unity.Core.Editor.Tools
             _customPluginGitUrl = EditorGUILayout.TextField("Git URL:", _customPluginGitUrl);
 
             EditorGUILayout.Space(4);
-            EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(_customPluginGitUrl) || _customPluginGitUrl == "https://github.com/wasdgamestudio/" || _addRequest != null);
+            EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(_customPluginGitUrl) || _customPluginGitUrl == "https://github.com/thoxuong92/" || _addRequest != null);
             if (GUILayout.Button("⚡ Cài Đặt Plugin Qua Git URL Này", GUILayout.Height(30)))
             {
                 InstallGitUrlDirectly(_customPluginGitUrl);
@@ -338,7 +290,7 @@ namespace Unity.Core.Editor.Tools
             EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawPackageItem(WasdPackageInfo pkg, bool isPlugin)
+        private void DrawPackageItem(PackageItemInfo pkg, bool isPlugin)
         {
             if (pkg == null) return;
 
@@ -387,7 +339,7 @@ namespace Unity.Core.Editor.Tools
             EditorGUILayout.Space(3);
         }
 
-        private string GetGitUrl(WasdPackageInfo pkg)
+        private string GetGitUrl(PackageItemInfo pkg)
         {
             if (pkg == null) return "";
             if (!string.IsNullOrEmpty(pkg.CustomGitUrl))
@@ -397,14 +349,14 @@ namespace Unity.Core.Editor.Tools
             return $"{_gitOrgUrl.TrimEnd('/')}/{pkg.RepoName}".Trim();
         }
 
-        private void InstallPackage(WasdPackageInfo pkg)
+        private void InstallPackage(PackageItemInfo pkg)
         {
             if (pkg == null) return;
             string gitUrl = GetGitUrl(pkg);
             InstallGitUrlDirectly(gitUrl, pkg.DisplayName);
         }
 
-        private void UpdatePackage(WasdPackageInfo pkg)
+        private void UpdatePackage(PackageItemInfo pkg)
         {
             if (pkg == null) return;
             string gitUrl = GetGitUrl(pkg);
@@ -412,7 +364,7 @@ namespace Unity.Core.Editor.Tools
             InstallGitUrlDirectly(gitUrl, pkg.DisplayName);
         }
 
-        private void UpdateAllInstalledPackages(List<WasdPackageInfo> list)
+        private void UpdateAllInstalledPackages(List<PackageItemInfo> list)
         {
             if (list == null) return;
 
@@ -472,7 +424,7 @@ namespace Unity.Core.Editor.Tools
             Repaint();
         }
 
-        private void UninstallPackage(WasdPackageInfo pkg)
+        private void UninstallPackage(PackageItemInfo pkg)
         {
             if (pkg == null) return;
             string idToRemove = !string.IsNullOrEmpty(pkg.PackageId) ? pkg.PackageId : pkg.CustomGitUrl;
@@ -483,7 +435,7 @@ namespace Unity.Core.Editor.Tools
             EditorApplication.update += ProgressCallback;
         }
 
-        private void InstallSelectedPackages(List<WasdPackageInfo> list)
+        private void InstallSelectedPackages(List<PackageItemInfo> list)
         {
             if (list == null) return;
             foreach (var pkg in list)

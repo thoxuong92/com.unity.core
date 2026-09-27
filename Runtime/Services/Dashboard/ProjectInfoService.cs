@@ -16,8 +16,8 @@ namespace Unity.Core.Services.Dashboard
 
         public static bool IsFetched { get; private set; }
 
-        private static WasdDashboardClient _client = new WasdDashboardClient();
-        public static WasdDashboardClient Client => _client;
+        private static ProjectDashboardClient _client = new ProjectDashboardClient();
+        public static ProjectDashboardClient Client => _client;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AutoLoad()

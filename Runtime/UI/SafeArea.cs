@@ -1,5 +1,4 @@
 using UnityEngine;
-using Unity.Core.Tick;
 
 namespace Unity.Core.UI
 {
@@ -9,7 +8,7 @@ namespace Unity.Core.UI
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     [AddComponentMenu("Unity Core/UI/Safe Area")]
-    public class SafeArea : TickBehaviour
+    public class SafeArea : MonoBehaviour
     {
         public enum SimDevice
         {
@@ -46,14 +45,13 @@ namespace Unity.Core.UI
         public bool ConformX { get => conformX; set => conformX = value; }
         public bool ConformY { get => conformY; set => conformY = value; }
 
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
             _panel = GetComponent<RectTransform>();
             Refresh();
         }
 
-        public override void OnUpdate()
+        private void Update()
         {
             Refresh();
         }
