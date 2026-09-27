@@ -6,7 +6,7 @@ namespace Unity.Core.Logging
 {
     /// <summary>
     /// Conditional Logger for Unity Core.
-    /// In Release builds (without ENABLE_UNITY_CORE_LOG or ENABLE_WASD_LOG define symbol), all logging calls
+    /// In Release builds (without ENABLE_UNITY_CORE_LOG define symbol), all logging calls
     /// are stripped out completely by the C# compiler, eliminating GC allocs & Logcat exposure.
     /// </summary>
     public static class AppLogger

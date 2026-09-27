@@ -5,12 +5,10 @@ Gói framework nền tảng dành cho các dự án game Unity, hỗ trợ cả 
 ## Tính Năng Chính
 1. **`ServiceRegistry`**: Service Locator tốc độ cao, hỗ trợ giải phóng bộ nhớ và vòng đời `IService`.
 2. **`EventBus`**: Message hub phi tập trung theo chuẩn Type-Safe (hỗ trợ struct/class implementing `IEvent`), triệt tiêu phụ thuộc chéo giữa các module.
-3. **`GameStateMachine`**: Quản lý State Flow của game (Boot -> Splash -> MainMenu -> Gameplay -> GameOver).
-4. **`ObjectPooler`**: Pool tái sử dụng GameObject & Component chống rác bộ nhớ (GC Allocation Spikes) trên thiết bị di động.
-5. **`AppLogger`**: Hệ thống logging có điều kiện `[Conditional("ENABLE_UNITY_CORE_LOG")]`, tự động xóa sạch log khi build Release để an toàn trên Store.
-6. **`PackageInstallerWizard`** (Editor Window): Tích hợp trực tiếp tại `Unity Core > Package Manager Hub` để cài/gỡ các module qua Git URL.
-7. **`AccountSafetyScaffolder`** (Editor Window): Quét hardcoded API Key, kiểm tra IL2CPP Stripping, cấu hình an toàn cho nhiều tài khoản Google Play / App Store.
-8. **`Splash` & Bootstrapping**: Quản lý quy trình nạp khởi đầu (Progress Bar, Remote Config, App Open Ad first open, Internet connectivity check, Auto Banner & Scene Transition) tương thích hoàn toàn với hệ thống WASD.
+3. **`SecurePlayerPrefs`**: Hệ thống lưu trữ dữ liệu an toàn, mã hóa chống can thiệp (anti-cheat) và bảo vệ dữ liệu nhạy cảm.
+4. **`AppLogger`**: Hệ thống logging có điều kiện `[Conditional("ENABLE_UNITY_CORE_LOG")]`, tự động xóa sạch log khi build Release để an toàn trên Store.
+5. **`PackageInstallerWizard`** (Editor Window): Tích hợp trực tiếp tại `Unity Core > Package Manager Hub` để quản lý các package module (Firebase, AppLovin, Adjust, AppsFlyer).
+6. **`Splash` & Bootstrapping**: Quản lý quy trình nạp khởi đầu (Progress Bar, Remote Config, App Open Ad first open, Internet connectivity check, Auto Banner & Scene Transition) chuẩn hóa trên kiến trúc `GameFramework`.
 
 ## Hướng Dẫn Cài Đặt Qua UPM (Unity Package Manager)
 Thêm vào file `Packages/manifest.json`:
@@ -63,7 +61,7 @@ EventBus.Unsubscribe<ScoreChangedEvent>(OnScoreChanged);
 ### 3. GameBootstrapper & Splash Loading
 `GameBootstrapper` là lớp thuần C# tự động khởi chạy tại `BeforeSceneLoad` (không kế thừa MonoBehaviour, không dùng Singleton, không scan Assembly, không Find Object).
 
-- **`GameBootstrapper`**: Cấu hình `targetFrameRate = 60`, `multiTouchEnabled = true`, khởi tạo `GameStateMachine` và tự động cập nhật qua Unity PlayerLoop.
+- **`GameBootstrapper`**: Cấu hình `targetFrameRate = 60`, `multiTouchEnabled = true`, tự động quản lý vòng đời và dọn dẹp bộ nhớ ServiceRegistry khi thoát ứng dụng.
 - **`Splash`**: Component MonoBehaviour điều phối quá trình loading, Remote Config, App Open Ad đầu tiên và hiển thị Banner khi hoàn tất.
 
 Mọi script UI ở bất kỳ scene nào đều có thể lắng nghe tiến trình qua Static Events:

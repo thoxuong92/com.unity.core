@@ -88,7 +88,7 @@ namespace Unity.Core.Protected
                 {
                     return val;
                 }
-                Debug.LogWarning($"[W_PlayerPrefs] Phát hiện can thiệp dữ liệu cho key '{key}'! Giá trị trả về mặc định.");
+                Debug.LogWarning($"[SecurePlayerPrefs] Phát hiện can thiệp dữ liệu cho key '{key}'! Giá trị trả về mặc định.");
                 return defaultValue;
             }
 
@@ -150,7 +150,7 @@ namespace Unity.Core.Protected
                 {
                     return plain;
                 }
-                Debug.LogWarning($"[W_PlayerPrefs] Phát hiện can thiệp string cho key '{key}'!");
+                Debug.LogWarning($"[SecurePlayerPrefs] Phát hiện can thiệp string cho key '{key}'!");
                 return defaultValue;
             }
 

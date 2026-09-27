@@ -219,36 +219,3 @@ namespace GameFramework
     {
     }
 }
-
-namespace WASD
-{
-    /// <summary>
-    /// Lớp chuyển tiếp WASD.Splash tương thích ngược cho các dự án cũ.
-    /// </summary>
-    [Obsolete("Vui lòng sử dụng GameFramework.Splash hoặc Unity.Core.Boot.Splash.")]
-    [HelpURL("https://github.com/thoxuong92/com.unity.core")]
-    public class Splash : GameFramework.Splash
-    {
-    }
-
-    /// <summary>
-    /// Logging bridge tương thích ngược cho cú pháp Wasd.Log cũ.
-    /// </summary>
-    [Obsolete("Vui lòng sử dụng GameFramework.GameLog hoặc Unity.Core.Logging.AppLogger thay cho Wasd.")]
-    public static class Wasd
-    {
-        public static void Log(string message) => GameFramework.GameLog.Log(message);
-        public static void Log(string tag, string message) => GameFramework.GameLog.Log(tag, message);
-        public static void LogWarning(string message) => GameFramework.GameLog.LogWarning(message);
-        public static void LogError(string message) => GameFramework.GameLog.LogError(message);
-    }
-
-    /// <summary>
-    /// Thuộc tính ReadOnly tương thích ngược trong namespace WASD.
-    /// </summary>
-    [Obsolete("Vui lòng sử dụng GameFramework.ReadOnlyAttribute hoặc Unity.Core.ReadOnlyAttribute.")]
-    [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public class ReadOnlyAttribute : GameFramework.ReadOnlyAttribute
-    {
-    }
-}

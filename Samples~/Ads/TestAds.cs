@@ -1,17 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using Unity.Core.Services;
+using Unity.Core.Services.Ads;
 
 public class TestAds : MonoBehaviour
 {
     void Start()
     {
-        W_Ads.Register(new DemoAdsService());
+        AdsService.Register(new DemoAdsService());
     }
 
     [ContextMenu("ShowAppOpen")]
     void ShowAOA()
     {
-        API.Get<W_Ads>().ShowAppOpen("location", () => Debug.Log("Callback"));
+        AdsService.ShowAppOpen("location", () => Debug.Log("Callback"));
     }
 }

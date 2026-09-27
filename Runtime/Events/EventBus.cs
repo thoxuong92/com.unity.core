@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +13,7 @@ namespace Unity.Core.Events
     }
 
     /// <summary>
-    /// Type-safe, decoupled Event Bus for WASD Mobile Studio.
+    /// Type-safe, decoupled Event Bus for Unity Core Framework.
     /// Eliminates direct references between game modules and gameplay logic.
     /// </summary>
     public static class EventBus
