@@ -183,12 +183,6 @@ namespace Unity.Core.Editor.Tools
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             _gitOrgUrl = EditorGUILayout.TextField("GitHub Base URL:", _gitOrgUrl);
-
-            EditorGUILayout.Space(4);
-            if (GUILayout.Button("🌐 Đồng Bộ Cấu Hình Dự Án Từ Dashboard...", GUILayout.Height(26)))
-            {
-                ProjectInfoSyncWindow.ShowWindow();
-            }
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(8);
