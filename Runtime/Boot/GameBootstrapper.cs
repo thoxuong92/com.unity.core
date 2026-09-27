@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.LowLevel;
+using UnityEngine.PlayerLoop;
 using Unity.Core.FSM;
 using Unity.Core.Logging;
 using Unity.Core.Services;
@@ -7,135 +9,83 @@ using Unity.Core.Services;
 namespace Unity.Core.Boot
 {
     /// <summary>
-    /// Base Bootstrapper MonoBehaviour cho toàn bộ game nền Unity Core.
-    /// Quản lý khởi tạo Service, cấu hình Frame Rate và khởi động Game State Machine.
-    /// Tự động kích hoạt tại BeforeSceneLoad mà KHÔNG CẦN gán component MonoBehaviour thủ công trong scene.
+    /// Bootstrapper thuần C# tự động khởi chạy tại BeforeSceneLoad.
+    /// Hoàn toàn không kế thừa MonoBehaviour, không dùng Singleton, không scan Assembly, không Find Object.
     /// </summary>
-    [DefaultExecutionOrder(-1000)]
-    public class GameBootstrapper : MonoBehaviour
+    public static class GameBootstrapper
     {
-        public static GameBootstrapper Instance { get; private set; }
+        public static GameStateMachine StateMachine { get; private set; }
+        public static bool IsInitialized { get; private set; }
 
         /// <summary>
-        /// Cho phép bật/tắt cơ chế tự động khởi chạy GameBootstrapper lúc game bật.
+        /// Sự kiện bắn ra khi GameBootstrapper hoàn tất khởi tạo ban đầu.
         /// </summary>
-        public static bool EnableAutoBootstrap { get; set; } = true;
-
-        public GameStateMachine StateMachine { get; protected set; }
+        public static event Action OnBoot;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void OnInit()
         {
-            if (!EnableAutoBootstrap || Instance != null) return;
+            if (IsInitialized) return;
+            IsInitialized = true;
 
-#if UNITY_2023_1_OR_NEWER
-            var existing = UnityEngine.Object.FindFirstObjectByType<GameBootstrapper>();
-#else
-            var existing = UnityEngine.Object.FindObjectOfType<GameBootstrapper>();
-#endif
-            if (existing != null)
-            {
-                Instance = existing;
-                return;
-            }
+            AppLogger.Log("[GameBootstrapper] Khởi chạy hệ thống Core...");
+            Application.targetFrameRate = 60;
+            Input.multiTouchEnabled = true;
 
-            // Tự động tìm subclass của GameBootstrapper do developer định nghĩa (nếu có)
-            Type targetType = typeof(GameBootstrapper);
+            StateMachine = new GameStateMachine();
+
+            // Đăng ký Update loop cho StateMachine thông qua PlayerLoop chuẩn của Unity
+            RegisterPlayerLoop();
+
+            // Đăng ký giải phóng tài nguyên tự động khi ứng dụng tắt
+            Application.quitting -= OnApplicationQuitting;
+            Application.quitting += OnApplicationQuitting;
+
+            OnBoot?.Invoke();
+        }
+
+        private static void RegisterPlayerLoop()
+        {
             try
             {
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                for (int i = 0; i < assemblies.Length; i++)
+                var currentLoop = PlayerLoop.GetCurrentPlayerLoop();
+                for (int i = 0; i < currentLoop.subSystemList.Length; i++)
                 {
-                    var asm = assemblies[i];
-                    var name = asm.GetName().Name;
-                    if (name.StartsWith("System") || name.StartsWith("mscorlib") || name.StartsWith("UnityEngine"))
+                    if (currentLoop.subSystemList[i].type == typeof(UnityEngine.PlayerLoop.Update))
                     {
-                        continue;
-                    }
+                        var updateSystem = currentLoop.subSystemList[i];
+                        var subSystems = new System.Collections.Generic.List<PlayerLoopSystem>(
+                            updateSystem.subSystemList ?? Array.Empty<PlayerLoopSystem>()
+                        );
 
-                    var types = asm.GetTypes();
-                    for (int j = 0; j < types.Length; j++)
-                    {
-                        var t = types[j];
-                        if (t != typeof(GameBootstrapper) && typeof(GameBootstrapper).IsAssignableFrom(t) && !t.IsAbstract)
+                        subSystems.Add(new PlayerLoopSystem
                         {
-                            targetType = t;
-                            break;
-                        }
-                    }
+                            type = typeof(GameBootstrapper),
+                            updateDelegate = OnUpdate
+                        });
 
-                    if (targetType != typeof(GameBootstrapper))
-                    {
+                        updateSystem.subSystemList = subSystems.ToArray();
+                        currentLoop.subSystemList[i] = updateSystem;
+                        PlayerLoop.SetPlayerLoop(currentLoop);
                         break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                AppLogger.LogWarning($"[GameBootstrapper] Lỗi quét custom bootstrapper: {ex.Message}. Sử dụng default GameBootstrapper.");
+                AppLogger.LogWarning($"[GameBootstrapper] Không thể gắn PlayerLoop: {ex.Message}");
             }
-
-            var rootGO = BootstrapperRoot.GetOrCreate();
-            rootGO.AddComponent(targetType);
-            AppLogger.Log($"[GameBootstrapper] Tự động khởi chạy GameBootstrapper ({targetType.Name}) không cần gán component thủ công.");
         }
 
-        protected virtual void Awake()
-        {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(this);
-                return;
-            }
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            AppLogger.Log("Game Bootstrapper starting...");
-            Application.targetFrameRate = 60;
-            Input.multiTouchEnabled = true;
-
-            StateMachine = new GameStateMachine();
-
-            RegisterServices();
-            RegisterStates(StateMachine);
-        }
-
-        protected virtual void Start()
-        {
-            OnBootCompleted();
-        }
-
-        protected virtual void Update()
+        private static void OnUpdate()
         {
             StateMachine?.Update();
         }
 
-        protected virtual void OnDestroy()
+        private static void OnApplicationQuitting()
         {
-            if (Instance == this)
-            {
-                ServiceRegistry.ShutdownAll();
-                Instance = null;
-            }
-        }
-
-        /// <summary>
-        /// Đăng ký các dịch vụ gameplay bổ sung vào ServiceRegistry.
-        /// </summary>
-        protected virtual void RegisterServices() { }
-
-        /// <summary>
-        /// Đăng ký các FSM State bổ sung vào GameStateMachine.
-        /// </summary>
-        protected virtual void RegisterStates(GameStateMachine fsm) { }
-
-        /// <summary>
-        /// Kích hoạt state chuyển cảnh ban đầu sau khi boot xong.
-        /// </summary>
-        protected virtual void OnBootCompleted()
-        {
-            AppLogger.Log("[GameBootstrapper] Boot completed.");
+            AppLogger.Log("[GameBootstrapper] Ứng dụng thoát. Giải phóng ServiceRegistry...");
+            ServiceRegistry.ShutdownAll();
         }
     }
 }

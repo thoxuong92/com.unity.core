@@ -14,37 +14,27 @@ namespace Unity.Core.Boot
     /// Điều phối quá trình Splash Loading khi khởi động game.
     /// Quản lý thanh tiến trình mượt mà, đồng bộ cấu hình Remote Config, hiển thị App Open Ad đầu tiên,
     /// kiểm tra kết nối mạng và kích hoạt Banner khi hoàn tất.
-    /// Tự động kích hoạt tại BeforeSceneLoad mà KHÔNG CẦN gán component MonoBehaviour thủ công trong scene.
+    /// Không sử dụng Singleton, không scan Assembly, không Find Object.
     /// </summary>
     [HelpURL("https://github.com/thoxuong92/com.unity.core")]
     public class Splash : MonoBehaviour
     {
-        public static Splash Instance { get; private set; }
-
         /// <summary>
-        /// Cho phép bật/tắt cơ chế tự động chạy Splash Loading khi game bật.
-        /// </summary>
-        public static bool EnableAutoSplash { get; set; } = true;
-
-        /// <summary>
-        /// Sự kiện tĩnh thông báo phần trăm loading (0f -> 1f), cho phép mọi script UI trong scene lắng nghe.
+        /// Sự kiện tĩnh phát % loading (0f -> 1f) cho bất kỳ UI nào trong scene lắng nghe mà không cần Singleton.
         /// </summary>
         public static event Action<float> OnProgress;
 
         /// <summary>
-        /// Sự kiện tĩnh thông báo hoàn tất loading toàn bộ.
+        /// Sự kiện tĩnh thông báo khi toàn bộ quá trình loading hoàn tất.
         /// </summary>
         public static event Action OnCompleted;
 
-        public static float CurrentPercent => Instance != null ? Instance.Percent : 0f;
-        public static bool IsLoadingCompleted => Instance != null && Instance.IsCompleted;
+        public static float CurrentPercent { get; private set; }
+        public static bool IsLoadingCompleted { get; private set; }
 
         [Header("Settings")]
         [SerializeField]
         private bool isLoadingOnAwake = true;
-
-        [SerializeField]
-        private bool dontDestroyOnLoad = false;
 
         [Min(0.1f)]
         [Tooltip("Tổng thời gian loading dự kiến tối thiểu (giây).")]
@@ -94,70 +84,11 @@ namespace Unity.Core.Boot
             set => nextSceneName = value;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void OnInit()
-        {
-            if (!EnableAutoSplash || Instance != null) return;
-
-#if UNITY_2023_1_OR_NEWER
-            var existing = UnityEngine.Object.FindFirstObjectByType<Splash>();
-#else
-            var existing = UnityEngine.Object.FindObjectOfType<Splash>();
-#endif
-            if (existing != null)
-            {
-                Instance = existing;
-                return;
-            }
-
-            var rootGO = BootstrapperRoot.GetOrCreate();
-            rootGO.AddComponent<Splash>();
-            AppLogger.Log("[Splash] Tự động khởi chạy Splash Loading không cần gán component thủ công.");
-        }
-
         protected virtual void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                // Đồng bộ các listener từ component trong scene vào Instance chính
-                Instance.OnProgressPercent.AddListener(p => OnProgressPercent?.Invoke(p));
-                Instance.OnComplete.AddListener(() => OnComplete?.Invoke());
-
-                // Đồng bộ cấu hình từ Inspector của Scene nếu người dùng có tùy chỉnh
-                Instance.DurationLoading = this.DurationLoading;
-                Instance.TimeLoadAppOpen = this.TimeLoadAppOpen;
-                Instance.TimeWaitRemoteConfig = this.TimeWaitRemoteConfig;
-                Instance.IsShowBannerOnComplete = this.IsShowBannerOnComplete;
-                if (!string.IsNullOrEmpty(this.nextSceneName))
-                {
-                    Instance.NextSceneName = this.nextSceneName;
-                }
-
-                // Phát ngay percent hiện tại cho UI mới xuất hiện trong scene
-                OnProgressPercent?.Invoke(Instance.Percent);
-
-                Destroy(this);
-                return;
-            }
-
-            Instance = this;
-
-            if (dontDestroyOnLoad)
-            {
-                DontDestroyOnLoad(gameObject);
-            }
-
             if (isLoadingOnAwake)
             {
                 StartLoading();
-            }
-        }
-
-        protected virtual void OnDestroy()
-        {
-            if (Instance == this)
-            {
-                Instance = null;
             }
         }
 
@@ -176,26 +107,15 @@ namespace Unity.Core.Boot
             _loadingCoroutine = StartCoroutine(IE_Loading());
         }
 
-        /// <summary>
-        /// Cho phép bắt đầu loading tĩnh từ bất cứ đâu.
-        /// </summary>
-        public static void Start()
-        {
-            if (Instance != null)
-            {
-                Instance.StartLoading();
-            }
-        }
-
         private IEnumerator IE_Loading()
         {
             _timeStart = Time.time;
             Time.timeScale = 1f;
             _isCompleted = false;
             _isCompletedAppOpen = false;
+            IsLoadingCompleted = false;
 
-            OnProgressPercent?.Invoke(Percent);
-            OnProgress?.Invoke(Percent);
+            UpdatePercent(Percent);
 
             DurationLoading = Mathf.Max(0.1f, DurationLoading);
 
@@ -230,15 +150,14 @@ namespace Unity.Core.Boot
 
         private IEnumerator IE_Progress(float start, float end)
         {
-            Percent = start;
+            UpdatePercent(start);
             while (true)
             {
                 yield return new WaitForEndOfFrame();
                 float speed = AdsService.ShowFirstOpenDone ? 10f : 1f;
 
-                Percent = Mathf.MoveTowards(Percent, end, speed * Time.deltaTime / DurationLoading);
-                OnProgressPercent?.Invoke(Percent);
-                OnProgress?.Invoke(Percent);
+                float nextValue = Mathf.MoveTowards(Percent, end, speed * Time.deltaTime / DurationLoading);
+                UpdatePercent(nextValue);
 
                 if (Percent >= end)
                 {
@@ -249,16 +168,15 @@ namespace Unity.Core.Boot
 
         private IEnumerator IE_Progress(float start, float end, float duration)
         {
-            Percent = start;
+            UpdatePercent(start);
             float timeWait = Time.time + duration;
 
             while (Time.time <= timeWait)
             {
                 yield return new WaitForEndOfFrame();
 
-                Percent = Mathf.MoveTowards(Percent, end, Time.deltaTime / duration);
-                OnProgressPercent?.Invoke(Percent);
-                OnProgress?.Invoke(Percent);
+                float nextValue = Mathf.MoveTowards(Percent, end, Time.deltaTime / duration);
+                UpdatePercent(nextValue);
 
                 if (Percent >= end)
                 {
@@ -267,11 +185,18 @@ namespace Unity.Core.Boot
             }
         }
 
+        private void UpdatePercent(float value)
+        {
+            Percent = value;
+            CurrentPercent = value;
+            OnProgressPercent?.Invoke(value);
+            OnProgress?.Invoke(value);
+        }
+
         private IEnumerator IE_WaitRemoteConfig(float duration = 3f)
         {
             float timeWait = Time.time + duration;
 
-            // Trigger fetch nếu chưa fetch
             RemoteConfigService.Fetch();
 
             while (!RemoteConfigService.IsFetched && Time.time < timeWait)
@@ -279,7 +204,6 @@ namespace Unity.Core.Boot
                 yield return new WaitForEndOfFrame();
             }
 
-            // Đồng bộ cấu hình thời gian chờ App Open từ Remote Config hoặc AdsSettings
             if (RemoteConfigService.IsFetched)
             {
                 TimeLoadAppOpen = RemoteConfigService.GetValue("time_load_app_open", AdsService.Settings.TimeLoadAppOpen);
@@ -317,7 +241,6 @@ namespace Unity.Core.Boot
                 }
             }
 
-            // Nếu timeout hoặc ad chưa sẵn sàng, đánh dấu hoàn tất để không chặn tốc độ loading
             if (!_isCompletedAppOpen)
             {
                 AdsService.ShowFirstOpenDone = true;
@@ -333,15 +256,14 @@ namespace Unity.Core.Boot
         {
             if (_isCompleted) return;
             _isCompleted = true;
+            IsLoadingCompleted = true;
 
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
                 AnalyticsService.LogEvent("internet_not_reachable");
             }
 
-            Percent = 1f;
-            OnProgressPercent?.Invoke(1f);
-            OnProgress?.Invoke(1f);
+            UpdatePercent(1f);
 
             OnComplete?.Invoke();
             OnCompleted?.Invoke();

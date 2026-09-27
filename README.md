@@ -60,8 +60,11 @@ EventBus.Publish(new ScoreChangedEvent { NewScore = 100 });
 EventBus.Unsubscribe<ScoreChangedEvent>(OnScoreChanged);
 ```
 
-### 3. Splash Loading & Package Bootstrap (Zero-Setup Auto-Start)
-`GameBootstrapper` và `Splash` **tự động khởi chạy ngay tại `BeforeSceneLoad`** mà không cần tạo GameObject hay kéo thả component MonoBehaviour vào bất kỳ Scene nào!
+### 3. GameBootstrapper & Splash Loading
+`GameBootstrapper` là lớp thuần C# tự động khởi chạy tại `BeforeSceneLoad` (không kế thừa MonoBehaviour, không dùng Singleton, không scan Assembly, không Find Object).
+
+- **`GameBootstrapper`**: Cấu hình `targetFrameRate = 60`, `multiTouchEnabled = true`, khởi tạo `GameStateMachine` và tự động cập nhật qua Unity PlayerLoop.
+- **`Splash`**: Component MonoBehaviour điều phối quá trình loading, Remote Config, App Open Ad đầu tiên và hiển thị Banner khi hoàn tất.
 
 Mọi script UI ở bất kỳ scene nào đều có thể lắng nghe tiến trình qua Static Events:
 ```csharp
@@ -75,7 +78,7 @@ public class GameSplashUI : MonoBehaviour
 
     private void OnEnable()
     {
-        // Lắng nghe trực tiếp từ Splash tĩnh (không cần gán reference tới Splash)
+        // Lắng nghe trực tiếp từ Splash qua Static Event (không cần Singleton)
         Splash.OnProgress += OnProgressChanged;
         Splash.OnCompleted += OnSplashCompleted;
     }
@@ -97,5 +100,5 @@ public class GameSplashUI : MonoBehaviour
     }
 }
 ```
-*(Nếu bạn vẫn muốn kéo thả `Splash` component vào Scene để tùy chỉnh trên Inspector hoặc dùng `using WASD; public class Splash : TickBehaviour`, hệ thống sẽ tự động đồng bộ và gom về instance chính).*
+*(Tương thích 100% với code cũ `using WASD; public class Splash : TickBehaviour`).*
 
