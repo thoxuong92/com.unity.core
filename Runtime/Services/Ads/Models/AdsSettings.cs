@@ -12,6 +12,7 @@ namespace Unity.Core.Services.Ads
         [Header("General")]
         public bool IsAdsEnabled = true;
         public bool IsRemoveAds = false;
+        public bool EnforceCooldowns = true;
 
         [Header("Banner")]
         public bool IsBannerEnabled = true;
@@ -21,6 +22,7 @@ namespace Unity.Core.Services.Ads
         public bool IsInterstitialEnabled = true;
         public float InterstitialFirstDelay = 30f;
         public float InterstitialInterval = 45f;
+        public float RewardedInterstitialGrace = 18f;
 
         [Header("Rewarded Video")]
         public bool IsRewardedEnabled = true;
