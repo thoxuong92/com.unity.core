@@ -61,6 +61,17 @@ namespace Unity.Core.Services.Ads
             if (_done != null) _elapsed += Time.unscaledDeltaTime;
         }
 
+        // (vẽ bằng hai thanh: phông GUI trên máy không có ký tự ✕)
+        private static void Cross(Rect r, float thick, Color c)
+        {
+            var m = GUI.matrix;
+            var ctr = r.center;
+            float len = r.width * 0.5f;
+            var bar = new Rect(ctr.x - len / 2f, ctr.y - thick / 2f, len, thick);
+            GUIUtility.RotateAroundPivot(45, ctr); Fill(bar, c); GUI.matrix = m;
+            GUIUtility.RotateAroundPivot(-45, ctr); Fill(bar, c); GUI.matrix = m;
+        }
+
         private static void Fill(Rect r, Color c) { GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, c, 0, 0); }
 
         private static void Frame(Rect r, Color c, float t)
@@ -118,14 +129,14 @@ namespace Unity.Core.Services.Ads
                 Label(new Rect(box.x, box.y + 44 * u, box.width, 40 * u), _label, Mathf.RoundToInt(22 * u), Color.white);
                 int left = Mathf.CeilToInt(_duration - _elapsed);
                 bool finished = left <= 0;
-                string sub = _rewarded ? (finished ? "✓ Reward earned · close to collect" : "Reward in " + left + "…") : (finished ? "Close to continue" : "Closes in " + left + "…");
+                string sub = _rewarded ? (finished ? "Reward earned · close to collect" : "Reward in " + left + "...") : (finished ? "Close to continue" : "Closes in " + left + "...");
                 Label(new Rect(box.x, box.y + 96 * u, box.width, 30 * u), sub, Mathf.RoundToInt(13 * u), new Color(1f, 1f, 1f, 0.85f));
                 bool canClose = _rewarded || finished;
                 var close = new Rect(Screen.width - 60 * u, 14 * u, 44 * u, 44 * u);
                 if (canClose)
                 {
                     Fill(close, Color.white);
-                    Label(close, "✕", Mathf.RoundToInt(22 * u), new Color(0.07f, 0.13f, 0.2f));
+                    Cross(close, 3f * u, new Color(0.07f, 0.13f, 0.2f));
                     if (GUI.Button(close, GUIContent.none, GUIStyle.none))
                     {
                         var cb = _done;
